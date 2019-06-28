@@ -85,7 +85,7 @@ PROFILE_ID             := $(ARTIFACT_ID)-profile-$(VERSION)
 SRC_ID                 := $(ARTIFACT_ID)-src-$(VERSION)
 DOC_ID                 := $(ARTIFACT_ID)-doc-$(VERSION)
 
-.PHONY: all experimental trace debug tracefile debugfile profile gdb test compile test_compile
+.PHONY: all experimental trace debug tracefile debugfile profile gdb test testdebug testprofile compile test_compile
 .PHONY: install install_ladspa install_lv2 install_vst install_jack install_doc
 .PHONY: uninstall uninstall_ladspa uninstall_lv2 uninstall_vst uninstall_jack uninstall_doc
 .PHONY: release release_ladspa release_lv2 release_vst release_jack release_doc release_src
@@ -115,6 +115,18 @@ test: export MAKE_OPTS      += LSP_TESTING=1
 test: export BUILD_MODULES   = jack
 test: test_compile
 
+testdebug: export CFLAGS         += -O0 -DLSP_TESTING -DLSP_TRACE -g3
+testdebug: export CXXFLAGS       += -O0 -DLSP_TESTING -DLSP_TRACE -g3
+testdebug: export EXE_TEST_FLAGS += -g3
+testdebug: export MAKE_OPTS      += LSP_TESTING=1
+testdebug: compile
+
+testprofile: export CFLAGS         += -g -pg -O2 -DLSP_PROFILING -DLSP_TESTING -DLSP_TRACE -g3 -no-pie -fno-pie -fPIC
+testprofile: export CXXFLAGS       += -g -pg -O2 -DLSP_PROFILING -DLSP_TESTING -DLSP_TRACE -g3 -no-pie -fno-pie -fPIC
+testprofile: export EXE_TEST_FLAGS += -g -pg -O2 -g3 -no-pie -fno-pie -fPIC
+testprofile: export MAKE_OPTS      += LSP_TESTING=1
+testprofile: compile
+
 tracefile: export CFLAGS    += -DLSP_TRACEFILE
 tracefile: export CXXFLAGS  += -DLSP_TRACEFILE
 tracefile: trace
@@ -131,9 +143,9 @@ gdb: export CFLAGS          += -O0 -g3 -DLSP_TRACE
 gdb: export CXXFLAGS        += -O0 -g3 -DLSP_TRACE
 gdb: compile
 
-profile: export CFLAGS      += -g -pg -DLSP_PROFILING -no-pie
-profile: export CXXFLAGS    += -g -pg -DLSP_PROFILING -no-pie
-profile: export EXE_FLAGS   += -g -pg -no-pie
+profile: export CFLAGS      += -g -pg -DLSP_PROFILING -no-pie -fno-pie -fPIC
+profile: export CXXFLAGS    += -g -pg -DLSP_PROFILING -no-pie -fno-pie -fPIC
+profile: export EXE_FLAGS   += -g -pg -no-pie -fno-pie -fPIC
 profile: compile
 
 # Compilation and cleaning targets
@@ -148,15 +160,17 @@ compile test_compile:
 	@echo "  build directory     : $(OBJDIR)"
 	@echo "-------------------------------------------------------------------------------"
 	@mkdir -p $(OBJDIR)/src
-	@test -f $(OBJDIR)/$(PREFIX_FILE) || echo -n "$(PREFIX)" > $(OBJDIR)/$(PREFIX_FILE)
-	@test -f $(OBJDIR)/$(MODULES_FILE) || echo -n "$(BUILD_MODULES)" > $(OBJDIR)/$(MODULES_FILE)
-	@test -f $(OBJDIR)/$(BUILD_PROFILE) || echo -n "$(BUILD_PROFILE)" > $(OBJDIR)/$(BUILD_PROFILE_FILE)
+	@mkdir -p $(CFGDIR)
+	@test -f "$(CFGDIR)/$(PREFIX_FILE)" || echo -n "$(PREFIX)" > "$(CFGDIR)/$(PREFIX_FILE)"
+	@test -f "$(CFGDIR)/$(MODULES_FILE)" || echo -n "$(BUILD_MODULES)" > "$(CFGDIR)/$(MODULES_FILE)"
+	@test -f "$(CFGDIR)/$(BUILD_PROFILE)" || echo -n "$(BUILD_PROFILE)" > "$(CFGDIR)/$(BUILD_PROFILE_FILE)"
 	@$(MAKE) $(MAKE_OPTS) -C src all OBJDIR=$(OBJDIR)/src
 	@echo "Build OK"
 
 clean:
 	@-rm -rf $(BUILDDIR)
 	@-rm -rf $(TESTDIR)
+	@-rm -rf $(CFGDIR)
 	@echo "Clean OK"
 
 # Build targets
@@ -257,7 +271,7 @@ release_jack: release_prepare
 	@mkdir -p $(RELEASE_BIN)/$(JACK_ID)-$(BUILD_SYSTEM)-$(BUILD_PROFILE)
 	@mkdir -p $(RELEASE_BIN)/$(JACK_ID)-$(BUILD_SYSTEM)-$(BUILD_PROFILE)/lib/$(ARTIFACT_ID)
 	@mkdir -p $(RELEASE_BIN)/$(JACK_ID)-$(BUILD_SYSTEM)-$(BUILD_PROFILE)/bin
-	@$(INSTALL) $(LIB_JACK) $(RELEASE_BIN)/$(JACK_ID)-$(BUILD_SYSTEM)-$(BUILD_PROFILE)/lib/$(ARTIFACT_ID)
+	@$(INSTALL) $(LIB_JACK) $(RELEASE_BIN)/$(JACK_ID)-$(BUILD_SYSTEM)-$(BUILD_PROFILE)/lib/$(ARTIFACT_ID)/
 	@$(MAKE) $(MAKE_OPTS) -C $(OBJDIR)/src/jack install TARGET_PATH=$(RELEASE_BIN)/$(JACK_ID)-$(BUILD_SYSTEM)-$(BUILD_PROFILE)/bin INSTALL="$(INSTALL)"
 	@cp $(RELEASE_TEXT) $(RELEASE_BIN)/$(JACK_ID)-$(BUILD_SYSTEM)-$(BUILD_PROFILE)/
 	@tar -C $(RELEASE_BIN) -czf $(RELEASE_BIN)/$(JACK_ID)-$(BUILD_SYSTEM)-$(BUILD_PROFILE).tar.gz $(JACK_ID)-$(BUILD_SYSTEM)-$(BUILD_PROFILE)
@@ -316,7 +330,7 @@ uninstall_jack:
 	@-rm -f $(DESTDIR)$(BIN_PATH)/$(ARTIFACT_ID)-*
 	@-rm -f $(DESTDIR)$(LIB_PATH)/$(ARTIFACT_ID)-jack-core-*.so
 	@-rm -rf $(DESTDIR)$(LIB_PATH)/$(ARTIFACT_ID)
-	
+
 uninstall_doc:
 	@echo "Uninstalling DOC"
 	@-rm -rf $(DESTDIR)$(DOC_PATH)/$(ARTIFACT_ID)
