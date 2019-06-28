@@ -28,17 +28,18 @@ For more information about licensing, please read LICENSE.txt.
 ==== SYSTEM REQUIREMENTS ====
 
 Current matrix of architecture and platform support is:
-  ┌──────────┬──────┬────────┬──────────┬─────────┐
-  │Platform  │ i586 │ x86_64 │ armv7-ar │ aarch64 │
-  ╞══════════╪══════╪════════╪══════════╪═════════╡
-  │GNU/Linux │  F   │   F    │    E     │    E    │
-  ├──────────┼──────┼────────┼──────────┼─────────┤
-  │FreeBSD   │  E   │   E    │    U     │    U    │
-  └──────────┴──────┴────────┴──────────┴─────────┘
-    F - Full support
-    E - Experimental support, not enough feedback from users
-    U - Unknown, the code may build but it's work is not tested
-    N - No support, the code does not compile and does not work
+  ┌──────────┬──────┬────────┬──────────┬─────────┬───────┐
+  │Platform  │ i586 │ x86_64 │ armv7-ar │ aarch64 │ ppc64 │
+  ╞══════════╪══════╪════════╪══════════╪═════════╪═══════╡
+  │GNU/Linux │  F   │   F    │    E     │    E    │   C   │
+  ├──────────┼──────┼────────┼──────────┼─────────┼───────┤
+  │FreeBSD   │  E   │   E    │    U     │    U    │   U   │
+  └──────────┴──────┴────────┴──────────┴─────────┴───────┘
+    F - Full support.
+    C - The code does compile, not enough knowledge about it's correct work.
+    E - Experimental support, not enough feedback from users.
+    U - Unknown, the code may be built but the correctness of it's work has not been tested.
+    N - No support, the code may compile but the work has not been tested.
 
 Details about architectures supported in experimental mode:
   * ARMv7-AR support has been tested on Raspberry Pi 3 Model B under Raspbian OS.
@@ -125,6 +126,7 @@ and critical fixes for the previous release.
 IMPORTANT FOR VST INSTALLATIONS: If you deploy plugins as a subdirectory
 of your VST directory, the subdirectory should contain substring
 'lsp-plugins'. Otherwise plugins won't find the VST core library.
+Please notice that '~' means user's home directory.
 
 The usual directories for LADSPA are:
   * /usr/lib/ladspa
@@ -132,17 +134,22 @@ The usual directories for LADSPA are:
   * /usr/lib64/ladspa
   * /usr/local/lib64/ladspa
 
+  * ~/.ladspa
+  
 The usual directories for LV2 are:
   * /usr/lib/lv2
   * /usr/local/lib/lv2
   * /usr/lib64/lv2
   * /usr/local/lib64/lv2
+  * ~/.lv2
 
 The usual directories for LinuxVST are:
   * /usr/lib/vst
   * /usr/local/lib/vst
   * /usr/lib64/vst
   * /usr/local/lib64/vst
+  * ~/.lxvst
+  * ~/.vst
 
 The usual directories for JACK core library are:
   * /usr/lib
@@ -237,7 +244,8 @@ To build binaries for testing (developers only), use the following commands:
   make test
   
 To build both release binaries and binaries for testing, use the following commands:
-  make clean all test
+  make clean
+  make all test
 
 After issuing this command, the system will build release binaries into '.build'
 subdirectory and test binaries into '.test' subdirectory
