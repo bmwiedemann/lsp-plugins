@@ -2456,7 +2456,7 @@ typedef struct fxProgram
 
     /** Type of chunk:
      *   fMagic ('FxCk') - regular chunk
-     *   chunkPresetMagic ('FPCh') - opaque chukn
+     *   chunkPresetMagic ('FPCh') - opaque chunk
      * @see fMagic
      * @see chunkPresetMagic
      */
